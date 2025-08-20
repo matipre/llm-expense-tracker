@@ -25,7 +25,11 @@ import { telegramHttpClientProvider } from './infrastructure/providers/telegram-
     supabaseProvider,
     telegramHttpClientProvider,
     MessageProcessorService,
-    WorkerProcessorService,
+    {
+      provide: WorkerProcessorService,
+      useFactory: (responseSendingJob: TelegramResponseSendingJob) => new WorkerProcessorService([responseSendingJob.job]),
+      inject: [TelegramResponseSendingJob],
+    },
     TelegramPollingService,
     SupabaseJobFactory,
     TelegramMessageProcessingJob,
@@ -40,4 +44,4 @@ import { telegramHttpClientProvider } from './infrastructure/providers/telegram-
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

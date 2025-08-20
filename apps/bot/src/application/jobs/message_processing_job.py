@@ -5,7 +5,8 @@ import logging
 from datetime import datetime
 from typing import Any
 
-from domain.interfaces.job_factory import JobFactory, Job, JobOptions, TaskHandlerArgs
+from application.services.message_processor import MessageProcessorService
+from domain.interfaces.job_factory import JobFactory, JobOptions, TaskHandlerArgs
 from domain.entities.message import IncomingMessage
 from infrastructure.utils.queue_utils import create_success_result, create_error_result
 
@@ -13,7 +14,7 @@ from infrastructure.utils.queue_utils import create_success_result, create_error
 class MessageProcessingJob:
     """Job for processing incoming Telegram messages."""
     
-    def __init__(self, job_factory: JobFactory, message_processor_service):
+    def __init__(self, job_factory: JobFactory, message_processor_service: MessageProcessorService):
         self.job_factory = job_factory
         self.message_processor_service = message_processor_service
         self.logger = logging.getLogger(__name__)

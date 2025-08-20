@@ -5,21 +5,15 @@ Mirrors the TypeScript implementation for consistency.
 import logging
 from typing import List
 
-from application.jobs.message_processing_job import MessageProcessingJob
-from application.jobs.response_sending_job import ResponseSendingJob
+from domain.interfaces.job_factory import Job
 
 
 class WorkerProcessorService:
     """Service for managing all job workers."""
     
-    def __init__(self, message_processing_job: MessageProcessingJob, response_sending_job: ResponseSendingJob):
-        self.message_processing_job = message_processing_job
-        self.response_sending_job = response_sending_job
+    def __init__(self, jobs: List[Job]):
         self.logger = logging.getLogger(__name__)
-        self._workers: List[MessageProcessingJob | ResponseSendingJob] = [
-            message_processing_job,
-            response_sending_job
-        ]
+        self._workers = jobs
     
     async def start_workers(self) -> None:
         """Start all worker processors."""
@@ -27,12 +21,9 @@ class WorkerProcessorService:
         
         try:
             # Start message processing worker
-            await self.message_processing_job.job.turn_on()
+            for worker in self._workers:
+                await worker.turn_on()
             self.logger.info("MessageProcessing worker started")
-            
-            # Start response sending worker
-            await self.response_sending_job.job.turn_on()
-            self.logger.info("ResponseSending worker started")
             
         except Exception as e:
             self.logger.error(f"Error starting workers: {e}", exc_info=True)

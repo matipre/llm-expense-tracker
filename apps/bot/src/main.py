@@ -81,8 +81,7 @@ async def lifespan(app: FastAPI):
         
         # Initialize worker processor service
         worker_processor_service = WorkerProcessorService(
-            message_processing_job=message_processing_job,
-            response_sending_job=response_sending_job
+            jobs=[message_processing_job.job]
         )
         
         # Start all workers

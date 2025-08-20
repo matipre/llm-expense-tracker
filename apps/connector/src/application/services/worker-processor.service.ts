@@ -1,12 +1,12 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { TelegramResponseSendingJob } from '../jobs/telegram-response-sending.job.js';
+import { Job } from 'src/domain/interfaces/job-factory.interface.js';
 
 @Injectable()
 export class WorkerProcessorService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(WorkerProcessorService.name);
 
   constructor(
-    private readonly telegramResponseJob: TelegramResponseSendingJob
+    private readonly jobs: Job[]
   ) {}
 
   async onModuleInit() {
@@ -20,13 +20,16 @@ export class WorkerProcessorService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async startWorkers(): Promise<void> {
-    // Start only the response sending worker - Python handles message processing
-    await this.telegramResponseJob.job.turnOn();
+    for (const job of this.jobs) {
+      await job.turnOn();
+    }
     this.logger.log('TelegramResponseSending worker started');
   }
 
   private async stopWorkers(): Promise<void> {
-    await this.telegramResponseJob.job.turnOff();
+    for (const job of this.jobs) {
+      await job.turnOff();
+    }
     this.logger.log('All workers stopped');
   }
 }
