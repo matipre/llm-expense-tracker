@@ -14,11 +14,14 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from config.settings import settings
 from presentation.routers.health import router as health_router
 from infrastructure.services.openai_expense_parser import OpenAIExpenseParser
-from infrastructure.services.supabase_queue_service import SupabaseQueueService
+from infrastructure.services.supabase_job_factory import SupabaseJobFactory
 from infrastructure.providers.supabase_provider import SupabaseProvider
 from infrastructure.repositories.user_repository import PostgreSQLUserRepository
 from infrastructure.repositories.expense_repository import PostgreSQLExpenseRepository
 from application.services.message_processor import MessageProcessorService
+from application.services.worker_processor import WorkerProcessorService
+from application.jobs.message_processing_job import MessageProcessingJob
+from application.jobs.response_sending_job import ResponseSendingJob
 
 # Configure logging
 logging.basicConfig(
@@ -31,11 +34,12 @@ logger = logging.getLogger(__name__)
 # Global instances
 message_processor_service = None
 queue_service = None
+worker_processor_service = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
-    global message_processor_service, queue_service
+    global message_processor_service, queue_service, worker_processor_service
     
     try:
         # Validate settings
@@ -50,40 +54,46 @@ async def lifespan(app: FastAPI):
         user_repository = PostgreSQLUserRepository(settings.database_url)
         expense_repository = PostgreSQLExpenseRepository(settings.database_url)
         
-        # Use unified Supabase queue service with injected client
+        # Initialize Supabase client and services
         supabase_client = SupabaseProvider.get_client()
-        queue_service = SupabaseQueueService(supabase_client)
         
+        # Initialize job factory with configurable settings
+        job_factory = SupabaseJobFactory(
+            supabase_client=supabase_client,
+            poll_interval=settings.job_poll_interval,
+            batch_size=settings.job_batch_size,
+            visibility_timeout=settings.job_visibility_timeout
+        )
+        
+        # Initialize jobs first
+        response_sending_job = ResponseSendingJob(job_factory)
+        
+        # Initialize message processor service with response sending job
         message_processor_service = MessageProcessorService(
             user_repository=user_repository,
             expense_repository=expense_repository,
             expense_parser=expense_parser,
-            queue_service=queue_service
+            response_sending_job=response_sending_job
         )
         
-        # Start queue consumer
-        await queue_service.start_consumer()
+        # Initialize message processing job
+        message_processing_job = MessageProcessingJob(job_factory, message_processor_service)
         
-        # Set up the consumer loop with proper injection
-        async def consume_messages():
-            while True:
-                try:
-                    await queue_service.consume_messages(message_processor_service.process_message)
-                    await asyncio.sleep(settings.queue_poll_interval)
-                except Exception as e:
-                    logger.error(f"Error in consumer loop: {e}", exc_info=True)
-                    await asyncio.sleep(10)
+        # Initialize worker processor service
+        worker_processor_service = WorkerProcessorService(
+            message_processing_job=message_processing_job,
+            response_sending_job=response_sending_job
+        )
         
-        # Start the consumer task
-        consumer_task = asyncio.create_task(consume_messages())
+        # Start all workers
+        await worker_processor_service.start_workers()
         
         logger.info("Bot service started successfully")
         
         yield
         
         # Cleanup
-        consumer_task.cancel()
-        await queue_service.stop_consumer()
+        await worker_processor_service.stop_workers()
         await user_repository.close()
         await expense_repository.close()
         

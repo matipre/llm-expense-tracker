@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import type { Job, JobFactory } from '../../domain/interfaces/job-factory.interface.js';
 
 export interface TelegramMessageJobData {
@@ -13,7 +13,7 @@ export interface TelegramMessageJobData {
 export class TelegramMessageProcessingJob {
   public readonly job: Job;
 
-  constructor(jobFactory: JobFactory) {
+  constructor(@Inject('JobFactory') jobFactory: JobFactory) {
     this.job = jobFactory.createJob({
       name: 'telegram_received_messages'
     });

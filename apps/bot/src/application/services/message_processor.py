@@ -6,12 +6,12 @@ from datetime import datetime
 from decimal import Decimal
 
 from domain.entities.expense import Expense
-from domain.entities.message import IncomingMessage, BotResponse
+from domain.entities.message import IncomingMessage
 from domain.entities.user import User
 from domain.interfaces.user_repository import IUserRepository
 from domain.interfaces.expense_repository import IExpenseRepository
 from domain.interfaces.expense_parser import IExpenseParser
-from domain.interfaces.queue_service import IQueueService
+from application.jobs.response_sending_job import ResponseSendingJob
 
 
 class MessageProcessorService:
@@ -22,12 +22,12 @@ class MessageProcessorService:
         user_repository: IUserRepository,
         expense_repository: IExpenseRepository,
         expense_parser: IExpenseParser,
-        queue_service: IQueueService
+        response_sending_job: ResponseSendingJob
     ):
         self.user_repository = user_repository
         self.expense_repository = expense_repository
         self.expense_parser = expense_parser
-        self.queue_service = queue_service
+        self.response_sending_job = response_sending_job
         self.logger = logging.getLogger(__name__)
     
     async def process_message(self, message: IncomingMessage) -> None:
@@ -39,6 +39,8 @@ class MessageProcessorService:
         """
         try:
             self.logger.info(f"Processing message from user {message.telegram_user_id}: {message.message_text}")
+            
+            await self._send_success_response(message, "I'm processing your message...")
             
             # Check if user exists in whitelist
             user = await self.user_repository.find_by_telegram_id(str(message.telegram_user_id))
@@ -82,18 +84,16 @@ class MessageProcessorService:
     
     async def _send_success_response(self, message: IncomingMessage, text: str) -> None:
         """Send a success response back to Telegram."""
-        response = BotResponse(
+        await self.response_sending_job.schedule_response_sending(
             chat_id=message.chat_id,
             text=text,
             reply_to_message_id=message.message_id
         )
-        await self.queue_service.send_response(response)
     
     async def _send_error_response(self, message: IncomingMessage, text: str) -> None:
         """Send an error response back to Telegram."""
-        response = BotResponse(
+        await self.response_sending_job.schedule_response_sending(
             chat_id=message.chat_id,
             text=text,
             reply_to_message_id=message.message_id
         )
-        await self.queue_service.send_response(response)

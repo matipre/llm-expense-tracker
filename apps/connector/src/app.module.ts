@@ -31,6 +31,10 @@ import { telegramHttpClientProvider } from './infrastructure/providers/telegram-
     TelegramMessageProcessingJob,
     TelegramResponseSendingJob,
     {
+      provide: 'JobFactory',
+      useClass: SupabaseJobFactory,
+    },
+    {
       provide: 'ITelegramService',
       useClass: TelegramService,
     },
