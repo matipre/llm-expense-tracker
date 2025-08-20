@@ -5,7 +5,6 @@ OpenAI expense parser implementation using LangChain.
 import json
 import logging
 from decimal import Decimal
-from typing import Optional
 
 from langchain.schema import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
@@ -52,7 +51,7 @@ Examples:
 - "Hello" -> {{"is_expense": false, "description": "", "amount": 0, "category": "", "confidence": 0}}
 """
 
-    async def parse_expense(self, message_text: str) -> Optional[ParsedExpense]:
+    async def parse_expense(self, message_text: str) -> ParsedExpense | None:
         """Parse expense information from message text."""
         try:
             self.logger.info(f"Parsing expense from message: {message_text}")
@@ -105,8 +104,8 @@ Examples:
         """Determine if a message contains expense information."""
         try:
             # First, do a quick check with a simpler prompt
-            simple_prompt = """Is this message about spending money or an expense? 
-            
+            simple_prompt = """Is this message about spending money or an expense?
+
 Respond with just "YES" or "NO".
 
 Examples:

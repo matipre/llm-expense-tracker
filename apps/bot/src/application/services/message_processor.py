@@ -4,12 +4,10 @@ Message processor service - main use case for processing incoming messages.
 
 import logging
 from datetime import datetime
-from decimal import Decimal
 
 from application.jobs.response_sending_job import ResponseSendingJob
 from domain.entities.expense import Expense
 from domain.entities.message import IncomingMessage
-from domain.entities.user import User
 from domain.interfaces.expense_parser import IExpenseParser
 from domain.interfaces.expense_repository import IExpenseRepository
 from domain.interfaces.user_repository import IUserRepository
@@ -43,9 +41,13 @@ class MessageProcessorService:
         )
 
         # # Check if user exists in whitelist
-        user = await self.user_repository.find_by_telegram_id(str(message.telegram_user_id))
+        user = await self.user_repository.find_by_telegram_id(
+            str(message.telegram_user_id)
+        )
         if not user:
-            self.logger.warning(f"User {message.telegram_user_id} not in whitelist, ignoring message")
+            self.logger.warning(
+                f"User {message.telegram_user_id} not in whitelist, ignoring message"
+            )
             return
 
         # Check if message is about an expense

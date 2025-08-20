@@ -1,10 +1,13 @@
 """
 Health check router for the Bot Service.
 """
+
 from datetime import datetime
+
 from fastapi import APIRouter
 
 router = APIRouter()
+
 
 @router.get("/")
 async def get_health():
@@ -12,5 +15,5 @@ async def get_health():
     return {
         "status": "ok",
         "service": "bot",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
