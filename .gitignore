@@ -84,6 +84,14 @@ lib64
 .pytest_cache/
 .ruff_cache/
 
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+.venv.bak/
+
 # Alembic
 alembic/versions/*.py
 !alembic/versions/
@@ -92,6 +100,17 @@ alembic.ini
 # Build flags and temporary files
 *.flag
 requirements_installed.flag
+
+# Python development files
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.pyc
+__pycache__/
+.coverage
+htmlcov/
+.tox/
+.nox/
 
 # Supabase CLI generated files
 supabase/.branches/

@@ -43,10 +43,10 @@ class MessageProcessorService:
         )
 
         # # Check if user exists in whitelist
-        # user = await self.user_repository.find_by_telegram_id(str(message.telegram_user_id))
-        # if not user:
-        #     self.logger.warning(f"User {message.telegram_user_id} not in whitelist, ignoring message")
-        #     return
+        user = await self.user_repository.find_by_telegram_id(str(message.telegram_user_id))
+        if not user:
+            self.logger.warning(f"User {message.telegram_user_id} not in whitelist, ignoring message")
+            return
 
         # Check if message is about an expense
         is_expense = await self.expense_parser.is_expense_message(message.message_text)
@@ -70,7 +70,7 @@ class MessageProcessorService:
         # Create and save the expense
         expense = Expense(
             id=None,
-            user_id=123,
+            user_id=user.id,
             description=parsed_expense.description,
             amount=parsed_expense.amount,
             category=parsed_expense.category,
@@ -78,7 +78,7 @@ class MessageProcessorService:
         )
 
         saved_expense = await self.expense_repository.create(expense)
-        self.logger.info(f"Saved expense {saved_expense.id} for user {123}")
+        self.logger.info(f"Saved expense {saved_expense.id} for user {user.id}")
 
         # Send success response
         response_text = f"{saved_expense.category} expense added ✅"
