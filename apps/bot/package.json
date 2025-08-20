@@ -7,14 +7,7 @@
     "dev": "cd src && python3 -m uvicorn main:app --reload --host 0.0.0.0 --port 3002",
     "start": "cd src && python3 -m uvicorn main:app --host 0.0.0.0 --port 3002",
     "test": "python3 -m pytest",
-    "install:py": "python3 -m pip install -r requirements.txt",
-    "migrate": "knex migrate:latest",
-    "migrate:status": "knex migrate:status",
-    "seed": "knex seed:run",
-    "db:setup": "npm run migrate && npm run seed"
+    "install:py": "python3 -m pip install -r requirements.txt"
   },
-  "devDependencies": {
-    "knex": "^3.0.0",
-    "pg": "^8.11.0"
-  }
+  "devDependencies": {}
 }

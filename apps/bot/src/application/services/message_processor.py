@@ -83,7 +83,9 @@ class MessageProcessorService:
         self.logger.info(f"Saved expense {saved_expense.id} for user {user.id}")
 
         # Send success response
-        response_text = f"{saved_expense.category} expense added ✅"
+        response_text = (
+            f"{saved_expense.category} expense of {saved_expense.amount} added ✅"
+        )
         await self._send_success_response(message, response_text)
 
     async def _send_success_response(self, message: IncomingMessage, text: str) -> None:
