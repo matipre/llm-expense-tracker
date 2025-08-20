@@ -1,21 +1,13 @@
 import { Injectable, Logger, Inject, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { ITelegramService } from '../../domain/interfaces/telegram.interface.js';
-import axios from 'axios';
-import { MessageProcessorService } from '../../application/services/message-processor.service.js';
-import { TELEGRAM_HTTP_CLIENT } from '../providers/telegram-http-client.provider.js';
+import { MessageProcessorService } from '../../application/services/message-processor.service';
+import { TELEGRAM_HTTP_CLIENT } from '../providers/telegram-http-client.provider';
+import type { HttpClient } from '../../utils/httpClient';
 
-// Simple interfaces for Telegram API responses
 interface TelegramApiResponse {
     ok: boolean;
     result?: any;
     description?: string;
-}
-
-interface WebhookInfo {
-    url: string;
-    has_custom_certificate?: boolean;
-    pending_update_count?: number;
 }
 
 @Injectable()
@@ -27,7 +19,7 @@ export class TelegramPollingService implements OnModuleInit, OnModuleDestroy {
 
     constructor(
         private configService: ConfigService,
-        @Inject(TELEGRAM_HTTP_CLIENT) private httpClient: typeof axios,
+        @Inject(TELEGRAM_HTTP_CLIENT) private httpClient: HttpClient,
         private messageProcessor: MessageProcessorService,
     ) {
     }

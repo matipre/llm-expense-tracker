@@ -1,41 +1,22 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { ITelegramService } from '../../domain/interfaces/telegram.interface.js';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ITelegramService } from '../../domain/interfaces/telegram.interface';
+import { TELEGRAM_HTTP_CLIENT } from '../providers/telegram-http-client.provider';
+import type { HttpClient } from '../../utils/httpClient';
 
 @Injectable()
 export class TelegramService implements ITelegramService {
   private readonly logger = new Logger(TelegramService.name);
-  private readonly botToken: string;
-  private readonly baseUrl: string;
 
-  constructor(private configService: ConfigService) {
-    this.botToken = this.configService.get<string>('telegram.botToken');
-    
-    if (!this.botToken) {
-      throw new Error('Telegram bot token is required');
-    }
-    
-    this.baseUrl = `https://api.telegram.org/bot${this.botToken}`;
-  }
+  constructor(
+    @Inject(TELEGRAM_HTTP_CLIENT) private httpClient: HttpClient,
+  ) {}
 
   async sendMessage(chatId: number, text: string): Promise<void> {
     try {
-      const response = await fetch(`${this.baseUrl}/sendMessage`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: text,
-        }),
+      await this.httpClient.post('/sendMessage', {
+        chat_id: chatId,
+        text: text,
       });
-
-      if (!response.ok) {
-        const error = await response.text();
-        this.logger.error(`Failed to send message: ${error}`);
-        throw new Error(`Telegram API error: ${response.status}`);
-      }
 
       this.logger.log(`Message sent to chat ${chatId}`);
     } catch (error) {
@@ -46,21 +27,9 @@ export class TelegramService implements ITelegramService {
 
   async setWebhook(url: string): Promise<void> {
     try {
-      const response = await fetch(`${this.baseUrl}/setWebhook`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          url: url,
-        }),
+      await this.httpClient.post('/setWebhook', {
+        url: url,
       });
-
-      if (!response.ok) {
-        const error = await response.text();
-        this.logger.error(`Failed to set webhook: ${error}`);
-        throw new Error(`Telegram API error: ${response.status}`);
-      }
 
       this.logger.log(`Webhook set to: ${url}`);
     } catch (error) {
@@ -71,15 +40,7 @@ export class TelegramService implements ITelegramService {
 
   async deleteWebhook(): Promise<void> {
     try {
-      const response = await fetch(`${this.baseUrl}/deleteWebhook`, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        const error = await response.text();
-        this.logger.error(`Failed to delete webhook: ${error}`);
-        throw new Error(`Telegram API error: ${response.status}`);
-      }
+      await this.httpClient.post('/deleteWebhook');
 
       this.logger.log('Webhook deleted');
     } catch (error) {
