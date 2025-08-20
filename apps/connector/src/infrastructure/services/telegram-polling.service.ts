@@ -1,8 +1,8 @@
 import { Injectable, Logger, Inject, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { MessageProcessorService } from '../../application/services/message-processor.service';
-import { TELEGRAM_HTTP_CLIENT } from '../providers/telegram-http-client.provider';
-import type { HttpClient } from '../../utils/httpClient';
+import { MessageProcessorService } from '../../application/services/message-processor.service.js';
+import { TELEGRAM_HTTP_CLIENT } from '../providers/telegram-http-client.provider.js';
+import type { HttpClient } from '../../utils/httpClient.js';
 
 interface TelegramApiResponse {
     ok: boolean;

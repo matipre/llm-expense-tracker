@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ITelegramService } from '../../domain/interfaces/telegram.interface';
-import { TELEGRAM_HTTP_CLIENT } from '../providers/telegram-http-client.provider';
-import type { HttpClient } from '../../utils/httpClient';
+import { ITelegramService } from '../../domain/interfaces/telegram.interface.js';
+import { TELEGRAM_HTTP_CLIENT } from '../providers/telegram-http-client.provider.js';
+import type { HttpClient } from '../../utils/httpClient.js';
 
 @Injectable()
 export class TelegramService implements ITelegramService {

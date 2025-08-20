@@ -1,13 +1,12 @@
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { TelegramUpdate, ProcessedMessage } from '../../domain/entities/telegram-message.entity.js';
-import type { IQueueService } from '../../domain/interfaces/queue.interface.js';
-import { QueueMessage } from '../../domain/interfaces/queue.interface.js';
+import { TelegramMessageProcessingJob } from '../jobs/telegram-message-processing.job.js';
 
 @Injectable()
 export class MessageProcessorService {
   private readonly logger = new Logger(MessageProcessorService.name);
 
-  constructor(@Inject('IQueueService') private readonly queueService: IQueueService) {}
+  constructor(private readonly telegramJob: TelegramMessageProcessingJob) {}
 
   async processWebhookUpdate(update: TelegramUpdate): Promise<void> {
     this.logger.log(`Processing update: ${update.update_id}`);
@@ -33,16 +32,14 @@ export class MessageProcessorService {
       messageId: message.message_id,
     };
 
-    // Send message to queue for bot processing
-    const queueMessage: QueueMessage = {
-      type: 'telegram_message',
-      payload: processedMessage,
-      timestamp: new Date(),
-      retryCount: 0,
-    };
-
     try {
-      await this.queueService.sendMessage(queueMessage);
+      await this.telegramJob.scheduleMessageProcessing(
+        processedMessage.chatId,
+        processedMessage.messageText,
+        processedMessage.telegramUserId,
+        processedMessage.timestamp.toISOString(),
+        processedMessage.messageId
+      );
       this.logger.log(`Message queued for processing from user ${processedMessage.telegramUserId}`);
     } catch (error) {
       this.logger.error('Failed to queue message for processing', error);

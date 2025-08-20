@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { SUPABASE_CLIENT } from '../../providers/supabase.provider';
+import { SUPABASE_CLIENT } from '../../providers/supabase.provider.js';
 
 describe('Dependency Injection', () => {
   let supabaseClient: SupabaseClient;
