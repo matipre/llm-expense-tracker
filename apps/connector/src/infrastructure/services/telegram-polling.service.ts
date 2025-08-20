@@ -17,6 +17,9 @@ export class TelegramPollingService implements OnModuleInit, OnModuleDestroy {
     private isPolling = false;
     private pollingTimeout: NodeJS.Timeout | null = null;
 
+    private readonly pollingIntervalInMillis: number = 500;
+    private readonly errorPollingIntervalInMillis: number = 2000
+    
     constructor(
         private configService: ConfigService,
         @Inject(TELEGRAM_HTTP_CLIENT) private httpClient: HttpClient,
@@ -75,7 +78,7 @@ export class TelegramPollingService implements OnModuleInit, OnModuleDestroy {
                 if (this.isPolling) {
                     this.pollingTimeout = setTimeout(() => {
                         this.startPollingLoop();
-                    }, 1000); // Wait 1 second between polls
+                    }, this.pollingIntervalInMillis); // Wait 1 second between polls
                 }
             })
             .catch((error) => {
@@ -84,7 +87,7 @@ export class TelegramPollingService implements OnModuleInit, OnModuleDestroy {
                 if (this.isPolling) {
                     this.pollingTimeout = setTimeout(() => {
                         this.startPollingLoop();
-                    }, 2000); // Wait 2 seconds on error before retrying
+                    }, this.errorPollingIntervalInMillis); // Wait 2 seconds on error before retrying
                 }
             });
     }

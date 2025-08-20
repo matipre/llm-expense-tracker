@@ -22,9 +22,11 @@ class TaskHandlerResult:
 
 class JobOptions:
     """Options for creating a job."""
-    def __init__(self, name: str, handler=None):
+    def __init__(self, name: str, handler=None, poll_interval_in_millis: int = 1000, visibility_timeout_in_seconds: int = 5):
         self.name = name
         self.handler = handler
+        self.poll_interval_in_millis = poll_interval_in_millis
+        self.visibility_timeout_in_seconds = visibility_timeout_in_seconds
 
 
 class Job(ABC):

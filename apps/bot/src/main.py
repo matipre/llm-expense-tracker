@@ -60,9 +60,7 @@ async def lifespan(app: FastAPI):
         # Initialize job factory with configurable settings
         job_factory = SupabaseJobFactory(
             supabase_client=supabase_client,
-            poll_interval=settings.job_poll_interval,
-            batch_size=settings.job_batch_size,
-            visibility_timeout=settings.job_visibility_timeout
+            batch_size=settings.job_batch_size
         )
         
         # Initialize jobs first

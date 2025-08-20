@@ -14,12 +14,10 @@ from domain.interfaces.job_factory import JobFactory, Job, JobOptions, TaskHandl
 class SupabaseJobFactory(JobFactory):
     """Supabase job factory that uses Supabase Queues (pgmq) for all queue operations."""
     
-    def __init__(self, supabase_client: Client, poll_interval: int = 5, batch_size: int = 10, visibility_timeout: int = 30):
+    def __init__(self, supabase_client: Client, batch_size: int = 10):
         self.supabase: Client = supabase_client
         self.logger = logging.getLogger(__name__)
-        self.poll_interval = poll_interval
         self.batch_size = batch_size
-        self.visibility_timeout = visibility_timeout
         self._workers: Dict[str, asyncio.Task] = {}
         
         self.logger.info("Supabase job factory initialized")
@@ -31,9 +29,7 @@ class SupabaseJobFactory(JobFactory):
         return SupabaseJob(
             supabase_client=self.supabase,
             options=options,
-            poll_interval=self.poll_interval,
             batch_size=self.batch_size,
-            visibility_timeout=self.visibility_timeout,
             workers=self._workers
         )
 
@@ -41,12 +37,10 @@ class SupabaseJobFactory(JobFactory):
 class SupabaseJob(Job):
     """Supabase job implementation."""
     
-    def __init__(self, supabase_client: Client, options: JobOptions, poll_interval: int, batch_size: int, visibility_timeout: int, workers: Dict[str, asyncio.Task]):
+    def __init__(self, supabase_client: Client, options: JobOptions, batch_size: int, workers: Dict[str, asyncio.Task]):
         self.supabase = supabase_client
         self.options = options
-        self.poll_interval = poll_interval
         self.batch_size = batch_size
-        self.visibility_timeout = visibility_timeout
         self.workers = workers
         self.logger = logging.getLogger(__name__)
         self._running = False
@@ -57,7 +51,7 @@ class SupabaseJob(Job):
             response = self.supabase.schema('pgmq_public').rpc('send', {
                 'queue_name': self.options.name,
                 'message': {'data': data},
-                'sleep_seconds': self.visibility_timeout
+                'sleep_seconds': self.options.visibility_timeout_in_seconds
             }).execute()
             
             if hasattr(response, 'error') and response.error:
@@ -114,7 +108,7 @@ class SupabaseJob(Job):
                 response = self.supabase.schema('pgmq_public').rpc('read', {
                     'n': self.batch_size,  # quantity of messages to read
                     'queue_name': self.options.name,
-                    'sleep_seconds': self.visibility_timeout
+                    'sleep_seconds': self.options.visibility_timeout_in_seconds
                 }).execute()
                 
                 if hasattr(response, 'error') and response.error:
@@ -153,14 +147,14 @@ class SupabaseJob(Job):
                         # Archive failed messages
                         await self._archive_message(msg['msg_id'])
                 
-                # Wait before next poll
-                await asyncio.sleep(self.poll_interval)
+                # Wait before next poll (convert milliseconds to seconds)
+                await asyncio.sleep(self.options.poll_interval_in_millis / 1000)
                 
             except asyncio.CancelledError:
                 break
             except Exception as e:
                 self.logger.error(f"Error in worker for queue {self.options.name}: {e}")
-                await asyncio.sleep(self.poll_interval)
+                await asyncio.sleep(self.options.poll_interval_in_millis / 1000)
     
     async def _delete_message(self, message_id: str) -> None:
         """Delete a message from the queue."""

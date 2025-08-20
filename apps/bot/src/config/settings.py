@@ -28,9 +28,7 @@ class Settings(BaseSettings):
     queue_poll_interval: int = int(os.getenv("QUEUE_POLL_INTERVAL", "5"))
     
     # Job Factory Configuration
-    job_poll_interval: int = int(os.getenv("JOB_POLL_INTERVAL", "5"))
     job_batch_size: int = int(os.getenv("JOB_BATCH_SIZE", "10"))
-    job_visibility_timeout: int = int(os.getenv("JOB_VISIBILITY_TIMEOUT", "30"))
     
     class Config:
         env_file = "../.env"

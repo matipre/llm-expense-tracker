@@ -36,7 +36,7 @@ class WorkerProcessorService:
         try:
             # Stop all workers
             for worker in self._workers:
-                await worker.job.turn_off()
+                await worker.turn_off()
             
             self.logger.info("All workers stopped")
             

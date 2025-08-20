@@ -10,6 +10,8 @@ export interface TaskHandlerResult {
 export interface JobOptions {
   name: string;
   handler?: (args: TaskHandlerArgs) => Promise<TaskHandlerResult>;
+  pollIntervalInMillis?: number;
+  visibilityTimeoutInSeconds?: number;
 }
 
 export interface Job {

@@ -7,10 +7,16 @@ import { SUPABASE_CLIENT } from '../providers/supabase.provider.js';
 export class SupabaseJobFactory implements JobFactory {
   private readonly logger = new Logger(SupabaseJobFactory.name);
 
+  private readonly DEFAULT_POLL_INTERVAL_IN_MILLIS = 1000;
+  private readonly DEFAULT_VISIBILITY_TIMEOUT_IN_SECONDS = 5;
+
   constructor(@Inject(SUPABASE_CLIENT) private readonly supabase: SupabaseClient) {}
 
   createJob(options: JobOptions): Job {
     this.logger.log(`SupabaseJobFactory - Creating job '${options.name}'`);
+
+    // Set default values for new options
+    const visibilityTimeoutInSeconds = options.visibilityTimeoutInSeconds ?? this.DEFAULT_VISIBILITY_TIMEOUT_IN_SECONDS;
 
     let workerInterval: any;
 
@@ -20,7 +26,7 @@ export class SupabaseJobFactory implements JobFactory {
         .rpc('send', {
           queue_name: options.name,
           message: { data },
-          sleep_seconds: 30
+          sleep_seconds: visibilityTimeoutInSeconds
         });
 
       if (error) {
@@ -50,12 +56,16 @@ export class SupabaseJobFactory implements JobFactory {
   private async createWorker(options: JobOptions): Promise<any> {
     this.logger.log(`SupabaseJobFactory - Starting worker for job '${options.name}'. QueueName: ${options.name}`);
 
+    // Set default values for new options
+    const pollIntervalInMillis = options.pollIntervalInMillis ?? this.DEFAULT_POLL_INTERVAL_IN_MILLIS;
+    const visibilityTimeoutInSeconds = options.visibilityTimeoutInSeconds ?? this.DEFAULT_VISIBILITY_TIMEOUT_IN_SECONDS;
+
     if(!options.handler) {
         this.logger.log(`SupabaseJobFactory - No handler for job '${options.name}'`);
         return;
     }
 
-    // Poll every 5 seconds for messages
+    // Poll based on configured interval
     const interval = setInterval(async () => {
       try {
         const { data: messages, error } = await this.supabase
@@ -63,7 +73,7 @@ export class SupabaseJobFactory implements JobFactory {
           .rpc('read', {
             n: 10, // quantity of messages to read
             queue_name: options.name,
-            sleep_seconds: 30
+            sleep_seconds: visibilityTimeoutInSeconds
           });
 
         if (error) {
@@ -111,7 +121,7 @@ export class SupabaseJobFactory implements JobFactory {
       } catch (error) {
         this.logger.error(`SupabaseJobFactory - Error in worker for queue ${options.name}:`, error);
       }
-    }, 5000);
+    }, pollIntervalInMillis);
 
     return interval;
   }
