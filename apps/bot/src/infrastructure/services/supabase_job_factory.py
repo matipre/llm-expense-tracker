@@ -50,8 +50,7 @@ class SupabaseJob(Job):
         try:
             response = self.supabase.schema('pgmq_public').rpc('send', {
                 'queue_name': self.options.name,
-                'message': {'data': data},
-                'sleep_seconds': self.options.visibility_timeout_in_seconds
+                'message': {'data': data}
             }).execute()
             
             if hasattr(response, 'error') and response.error:

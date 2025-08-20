@@ -23,7 +23,7 @@ class MessageProcessingJob:
         self.job = self.job_factory.create_job(JobOptions(
             name='telegram_received_messages',
             handler=self._handle_message,
-            poll_interval_in_millis=500,
+            poll_interval_in_millis=200,
         ))
     
     async def _handle_message(self, args: TaskHandlerArgs) -> Any:

@@ -17,7 +17,7 @@ export class TelegramPollingService implements OnModuleInit, OnModuleDestroy {
     private isPolling = false;
     private pollingTimeout: NodeJS.Timeout | null = null;
 
-    private readonly pollingIntervalInMillis: number = 500;
+    private readonly pollingIntervalInMillis: number = 200;
     private readonly errorPollingIntervalInMillis: number = 2000
     
     constructor(

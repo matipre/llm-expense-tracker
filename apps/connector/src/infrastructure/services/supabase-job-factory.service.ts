@@ -15,9 +15,6 @@ export class SupabaseJobFactory implements JobFactory {
   createJob(options: JobOptions): Job {
     this.logger.log(`SupabaseJobFactory - Creating job '${options.name}'`);
 
-    // Set default values for new options
-    const visibilityTimeoutInSeconds = options.visibilityTimeoutInSeconds ?? this.DEFAULT_VISIBILITY_TIMEOUT_IN_SECONDS;
-
     let workerInterval: any;
 
     const scheduleTask = async (data: any) => {
@@ -25,8 +22,7 @@ export class SupabaseJobFactory implements JobFactory {
         .schema('pgmq_public')
         .rpc('send', {
           queue_name: options.name,
-          message: { data },
-          sleep_seconds: visibilityTimeoutInSeconds
+          message: { data }
         });
 
       if (error) {

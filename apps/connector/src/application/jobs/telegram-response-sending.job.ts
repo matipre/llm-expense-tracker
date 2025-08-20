@@ -19,7 +19,8 @@ export class TelegramResponseSendingJob {
   ) {
     this.job = jobFactory.createJob({
       name: 'telegram_bot_responses',
-      pollIntervalInMillis: 500,
+      pollIntervalInMillis: 300,
+      visibilityTimeoutInSeconds: 3,
       handler: async ({ data }) => {
         const responseData = data as TelegramResponseJobData;
         
