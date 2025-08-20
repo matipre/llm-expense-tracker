@@ -88,3 +88,11 @@ lib64
 alembic/versions/*.py
 !alembic/versions/
 alembic.ini
+
+# Build flags and temporary files
+*.flag
+requirements_installed.flag
+
+# Supabase CLI generated files
+supabase/.branches/
+supabase/.temp/
