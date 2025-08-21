@@ -7,7 +7,8 @@
     "dev": "cd src && python3 -m uvicorn main:app --reload --host 0.0.0.0 --port 3002",
     "start": "cd src && python3 -m uvicorn main:app --host 0.0.0.0 --port 3002",
     "test": "python3 -m pytest",
-    "install:py": "python3 -m pip install -r requirements.txt"
+    "install:py": "python3 -m pip install -r requirements.txt",
+    "dev:with-env": "cd src && python3 -c \"import os; exec(open('../../.env').read().replace('export ', 'os.environ['')); exec(open('main.py').read())\""
   },
   "devDependencies": {}
 }

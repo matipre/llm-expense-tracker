@@ -1,0 +1,62 @@
+# Darwin Challenge - All services in one railway.toml
+# This configures all services when connecting via GitHub
+
+# Bot service (Python FastAPI)
+[[services]]
+name = "bot"
+source = "apps/bot"
+
+[services.build]
+builder = "dockerfile"
+
+[services.deploy]
+startCommand = "python -m uvicorn src.main:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
+
+[services.env]
+PYTHON_VERSION = "3.11"
+PORT = "3002"
+LOG_LEVEL = "INFO"
+ENVIRONMENT = "production"
+JOB_BATCH_SIZE = "10"
+QUEUE_POLL_INTERVAL = "200"
+OPENAI_MODEL = "gpt-4"
+OPENAI_MAX_TOKENS = "1000"
+OPENAI_TEMPERATURE = "0.7"
+TELEGRAM_MESSAGE_QUEUE = "telegram_received_messages"
+BOT_RESPONSE_QUEUE = "telegram_bot_responses"
+QUEUE_VISIBILITY_TIMEOUT = "30"
+QUEUE_MAX_RETRIES = "3"
+
+# Connector service (Node.js NestJS)
+[[services]]
+name = "connector"
+source = "apps/connector"
+
+[services.build]
+builder = "dockerfile"
+
+[services.deploy]
+startCommand = "node dist/main.js"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
+
+[services.env]
+NODE_ENV = "production"
+PORT = "3001"
+ENVIRONMENT = "production"
+
+# PostgreSQL Database
+[[services]]
+name = "postgres"
+template = "postgres"
+
+# RabbitMQ Message Broker
+[[services]]
+name = "rabbitmq"
+template = "rabbitmq"

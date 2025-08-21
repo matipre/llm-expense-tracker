@@ -7,13 +7,13 @@
     "lint": "turbo lint",
     "test": "turbo test",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "setup": "./scripts/dev-setup.sh",
-    "supabase": "supabase"
+    "setup": "./scripts/dev-setup.sh"
   },
   "devDependencies": {
     "prettier": "^3.0.0",
     "supabase": "^2.34.3",
-    "turbo": "^1.10.0"
+    "turbo": "^1.10.0",
+    "dotenv-cli": "^7.3.0"
   },
   "packageManager": "npm@9.0.0",
   "workspaces": [
