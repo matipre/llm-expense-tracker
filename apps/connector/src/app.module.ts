@@ -12,8 +12,7 @@ import { TelegramService } from './infrastructure/services/telegram.service.js';
 import { TelegramPollingService } from './infrastructure/services/telegram-polling.service.js';
 import { rabbitmqProvider } from './infrastructure/providers/rabbitmq.provider.js';
 import { telegramHttpClientProvider } from './infrastructure/providers/telegram-http-client.provider.js';
-
-export const IS_POLLING_ENABLED = 'IS_POLLING_ENABLED';
+import { IS_POLLING_ENABLED } from './infrastructure/constants/injection-tokens.js';
 
 @Module({
   imports: [
@@ -24,6 +23,11 @@ export const IS_POLLING_ENABLED = 'IS_POLLING_ENABLED';
   ],
   controllers: [HealthController, TelegramController],
   providers: [
+    {
+      provide: IS_POLLING_ENABLED,
+      useFactory: (configService: ConfigService) => configService.get<boolean>('telegram.isPollingEnabled'),
+      inject: [ConfigService],
+    },
     rabbitmqProvider,
     telegramHttpClientProvider,
     MessageProcessorService,
@@ -43,11 +47,6 @@ export const IS_POLLING_ENABLED = 'IS_POLLING_ENABLED';
     {
       provide: 'ITelegramService',
       useClass: TelegramService,
-    },
-    {
-      provide: IS_POLLING_ENABLED,
-      useFactory: (configService: ConfigService) => configService.get<boolean>('telegram.isPollingEnabled'),
-      inject: [ConfigService],
     },
   ],
 })

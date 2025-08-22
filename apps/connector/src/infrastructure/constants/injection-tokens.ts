@@ -1,0 +1,1 @@
+export const IS_POLLING_ENABLED = 'IS_POLLING_ENABLED';

@@ -1,6 +1,6 @@
 import { Injectable, Logger, Inject, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { MessageProcessorService } from '../../application/services/message-processor.service.js';
-import { IS_POLLING_ENABLED } from '../../app.module.js';
+import { IS_POLLING_ENABLED } from '../constants/injection-tokens.js';
 import { TELEGRAM_HTTP_CLIENT } from '../providers/telegram-http-client.provider.js';
 import type { HttpClient } from '../../utils/httpClient.js';
 
