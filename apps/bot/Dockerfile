@@ -25,4 +25,4 @@ USER app
 EXPOSE 3002
 
 # Start the application
-CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "3002"]
+CMD ["sh", "-c", "python -m uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-3002}"]
