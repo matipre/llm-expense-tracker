@@ -8,7 +8,14 @@
     "start": "cd src && python3 -m uvicorn main:app --host 0.0.0.0 --port 3002",
     "test": "python3 -m pytest",
     "install:py": "python3 -m pip install -r requirements.txt",
-    "dev:with-env": "cd src && python3 -c \"import os; exec(open('../../.env').read().replace('export ', 'os.environ['')); exec(open('main.py').read())\""
+    "dev:with-env": "cd src && python3 -c \"import os; exec(open('../../.env').read().replace('export ', 'os.environ['')); exec(open('main.py').read())\"",
+    "migrate": "knex migrate:latest",
+    "migrate:status": "knex migrate:list"
+  },
+  "dependencies": {
+    "knex": "^3.1.0",
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1"
   },
   "devDependencies": {}
 }
