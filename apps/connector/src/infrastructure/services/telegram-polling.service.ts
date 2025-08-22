@@ -1,6 +1,6 @@
 import { Injectable, Logger, Inject, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { MessageProcessorService } from '../../application/services/message-processor.service.js';
+import { IS_POLLING_ENABLED } from '../../app.module.js';
 import { TELEGRAM_HTTP_CLIENT } from '../providers/telegram-http-client.provider.js';
 import type { HttpClient } from '../../utils/httpClient.js';
 
@@ -21,15 +21,15 @@ export class TelegramPollingService implements OnModuleInit, OnModuleDestroy {
     private readonly errorPollingIntervalInMillis: number = 2000
     
     constructor(
-        private configService: ConfigService,
+        @Inject(IS_POLLING_ENABLED) private isPollingEnabled: boolean,
         @Inject(TELEGRAM_HTTP_CLIENT) private httpClient: HttpClient,
         private messageProcessor: MessageProcessorService,
     ) {
     }
 
     async onModuleInit() {
-        // Only start polling in development
-        if (this.configService.get<string>('environment') === 'development') {
+        // Only start polling if enabled via environment variable
+        if (this.isPollingEnabled) {
             await this.startPolling();
         }
     }

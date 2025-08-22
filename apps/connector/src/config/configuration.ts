@@ -3,6 +3,7 @@ export interface AppConfig {
   environment: string;
   telegram: {
     botToken: string;
+    isPollingEnabled: boolean;
   };
   rabbitmq: {
     url: string;
@@ -24,6 +25,7 @@ export default (): AppConfig => ({
   environment: process.env.NODE_ENV || 'development',
   telegram: {
     botToken: process.env.TELEGRAM_BOT_TOKEN || '',
+    isPollingEnabled: process.env.TELEGRAM_POLLING_ENABLED === 'true',
   },
   rabbitmq: {
     url: process.env.RABBITMQ_URL || 'amqp://expensio_user:expensio_password@localhost:5672',

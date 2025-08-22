@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from './config/configuration.js';
 import { HealthController } from './presentation/controllers/health.controller.js';
 import { TelegramController } from './presentation/controllers/telegram.controller.js';
@@ -12,6 +12,8 @@ import { TelegramService } from './infrastructure/services/telegram.service.js';
 import { TelegramPollingService } from './infrastructure/services/telegram-polling.service.js';
 import { rabbitmqProvider } from './infrastructure/providers/rabbitmq.provider.js';
 import { telegramHttpClientProvider } from './infrastructure/providers/telegram-http-client.provider.js';
+
+export const IS_POLLING_ENABLED = 'IS_POLLING_ENABLED';
 
 @Module({
   imports: [
@@ -41,6 +43,11 @@ import { telegramHttpClientProvider } from './infrastructure/providers/telegram-
     {
       provide: 'ITelegramService',
       useClass: TelegramService,
+    },
+    {
+      provide: IS_POLLING_ENABLED,
+      useFactory: (configService: ConfigService) => configService.get<boolean>('telegram.isPollingEnabled'),
+      inject: [ConfigService],
     },
   ],
 })
