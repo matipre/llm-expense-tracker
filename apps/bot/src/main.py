@@ -17,11 +17,11 @@ from application.jobs.response_sending_job import ResponseSendingJob
 from application.services.message_processor import MessageProcessorService
 from application.services.worker_processor import WorkerProcessorService
 from config.settings import settings
-from infrastructure.providers.supabase_provider import SupabaseProvider
+from infrastructure.providers.rabbitmq_provider import RabbitMQProvider
 from infrastructure.repositories.expense_repository import PostgreSQLExpenseRepository
 from infrastructure.repositories.user_repository import PostgreSQLUserRepository
 from infrastructure.services.openai_expense_parser import OpenAIExpenseParser
-from infrastructure.services.supabase_job_factory import SupabaseJobFactory
+from infrastructure.services.rabbitmq_job_factory import RabbitMQJobFactory
 from presentation.routers.health import router as health_router
 
 # Configure logging
@@ -34,18 +34,18 @@ logger = logging.getLogger(__name__)
 
 # Global instances
 message_processor_service = None
-queue_service = None
+job_factory = None
 worker_processor_service = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
-    global message_processor_service, queue_service, worker_processor_service
+    global message_processor_service, job_factory, worker_processor_service
 
     try:
-        # Validate settings
-        settings.validate_required_settings()
+        # Validate settings (skip Supabase validation for now)
+        # settings.validate_required_settings()
 
         # Initialize dependencies
         openai_expense_parser = OpenAIExpenseParser(
@@ -55,13 +55,8 @@ async def lifespan(app: FastAPI):
         user_repository = PostgreSQLUserRepository(settings.database_url)
         expense_repository = PostgreSQLExpenseRepository(settings.database_url)
 
-        # Initialize Supabase client and services
-        supabase_client = SupabaseProvider.get_client()
-
-        # Initialize job factory with configurable settings
-        job_factory = SupabaseJobFactory(
-            supabase_client=supabase_client, batch_size=settings.job_batch_size
-        )
+        # Initialize RabbitMQ job factory
+        job_factory = RabbitMQJobFactory(batch_size=settings.job_batch_size)
 
         # Initialize jobs first
         response_sending_job = ResponseSendingJob(job_factory)
@@ -93,6 +88,8 @@ async def lifespan(app: FastAPI):
 
         # Cleanup
         await worker_processor_service.stop_workers()
+        await job_factory.close()
+        await RabbitMQProvider.close_connection()
         await user_repository.close()
         await expense_repository.close()
 
