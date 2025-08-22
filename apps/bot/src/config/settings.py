@@ -17,11 +17,21 @@ class Settings(BaseSettings):
     openai_max_tokens: int = int(os.getenv("OPENAI_MAX_TOKENS", "1000"))
     openai_temperature: float = float(os.getenv("OPENAI_TEMPERATURE", "0.7"))
 
-    # Database Configuration (PostgreSQL from Railway)
-    database_url: str = os.getenv("DATABASE_URL", "")
+    # Database Configuration
+    database_url: str = ""
+    db_host: str = os.getenv("DB_HOST", "localhost")
+    db_port: int = int(os.getenv("DB_PORT", "5432"))
+    db_name: str = os.getenv("DB_NAME", "expensio")
+    db_user: str = os.getenv("DB_USER", "expensio_user")
+    db_password: str = os.getenv("DB_PASSWORD", "expensio_password")
 
     # RabbitMQ Configuration
-    rabbitmq_url: str = os.getenv("RABBITMQ_URL", "")
+    rabbitmq_url: str = ""
+    rabbitmq_host: str = os.getenv("RABBITMQ_HOST", "localhost")
+    rabbitmq_port: int = int(os.getenv("RABBITMQ_PORT", "5672"))
+    rabbitmq_user: str = os.getenv("RABBITMQ_USER", "expensio_user")
+    rabbitmq_password: str = os.getenv("RABBITMQ_PASSWORD", "expensio_password")
+    rabbitmq_vhost: str = os.getenv("RABBITMQ_VHOST", "/")
 
     # Application Configuration
     port: int = int(os.getenv("BOT_SERVICE_PORT", "3002"))
@@ -42,6 +52,22 @@ class Settings(BaseSettings):
     telegram_bot_token: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
     telegram_webhook_secret: str = os.getenv("TELEGRAM_WEBHOOK_SECRET", "")
     telegram_webhook_url: str = os.getenv("TELEGRAM_WEBHOOK_URL", "")
+
+    def model_post_init(self, __context=None) -> None:
+        """Construct URLs from individual components after model initialization."""
+        # Construct database URL if not provided directly
+        if not self.database_url:
+            self.database_url = os.getenv(
+                "DATABASE_URL",
+                f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
+            )
+        
+        # Construct RabbitMQ URL if not provided directly
+        if not self.rabbitmq_url:
+            self.rabbitmq_url = os.getenv(
+                "RABBITMQ_URL",
+                f"amqp://{self.rabbitmq_user}:{self.rabbitmq_password}@{self.rabbitmq_host}:{self.rabbitmq_port}{self.rabbitmq_vhost}"
+            )
 
     class Config:
         # Look for .env file in project root (3 levels up from this file)
