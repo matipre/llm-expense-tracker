@@ -5,9 +5,9 @@ Message processor service - main use case for processing incoming messages with 
 import logging
 
 from application.jobs.response_sending_job import ResponseSendingJob
+from application.services.user_service import UserService
 from domain.entities.message import IncomingMessage
 from domain.interfaces.expense_parser import IExpenseParser
-from domain.interfaces.user_repository import IUserRepository
 
 
 class MessageProcessorService:
@@ -15,11 +15,11 @@ class MessageProcessorService:
 
     def __init__(
         self,
-        user_repository: IUserRepository,
+        user_service: UserService,
         expense_parser: IExpenseParser,
         response_sending_job: ResponseSendingJob,
     ):
-        self.user_repository = user_repository
+        self.user_service = user_service
         self.expense_parser = expense_parser
         self.response_sending_job = response_sending_job
         self.logger = logging.getLogger(__name__)
@@ -37,15 +37,18 @@ class MessageProcessorService:
             message.message_text
         )
 
-        # Check if user exists in whitelist
-        user = await self.user_repository.find_by_telegram_id(
-            str(message.telegram_user_id)
+        # Get or register user
+        user, welcome_message = await self.user_service.get_or_register_user(
+            message.telegram_user_id, message.message_text
         )
+        
         if not user:
-            self.logger.warning(
-                "User %s not in whitelist, ignoring message",
-                message.telegram_user_id
-            )
+            # User not authorized and registration failed
+            return
+            
+        # If this is a new user registration, send welcome message and return
+        if welcome_message:
+            await self._send_response(message, welcome_message)
             return
 
         # Process message using LLM with tools

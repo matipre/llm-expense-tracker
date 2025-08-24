@@ -15,6 +15,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from application.jobs.message_processing_job import MessageProcessingJob
 from application.jobs.response_sending_job import ResponseSendingJob
 from application.services.message_processor import MessageProcessorService
+from application.services.user_service import UserService
 from application.services.worker_processor import WorkerProcessorService
 from config.settings import settings
 from infrastructure.providers.rabbitmq_provider import RabbitMQProvider
@@ -46,9 +47,6 @@ async def lifespan(app: FastAPI):
     global message_processor_service, job_factory, worker_processor_service
 
     try:
-        # Validate settings (skip Supabase validation for now)
-        # settings.validate_required_settings()
-
         # Initialize repositories
         user_repository = PostgreSQLUserRepository(settings.database_url)
         expense_repository = PostgreSQLExpenseRepository(settings.database_url)
@@ -73,9 +71,15 @@ async def lifespan(app: FastAPI):
         # Initialize jobs first
         response_sending_job = ResponseSendingJob(job_factory)
 
-        # Initialize message processor service with response sending job
-        message_processor_service = MessageProcessorService(
+        # Initialize user service
+        user_service = UserService(
             user_repository=user_repository,
+            registration_password=settings.registration_password,
+        )
+
+        # Initialize message processor service with user service
+        message_processor_service = MessageProcessorService(
+            user_service=user_service,
             expense_parser=openai_expense_parser,
             response_sending_job=response_sending_job,
         )

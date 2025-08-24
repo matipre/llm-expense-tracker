@@ -52,6 +52,9 @@ class Settings(BaseSettings):
     telegram_bot_token: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
     telegram_webhook_secret: str = os.getenv("TELEGRAM_WEBHOOK_SECRET", "")
     telegram_webhook_url: str = os.getenv("TELEGRAM_WEBHOOK_URL", "")
+    
+    # User Registration Configuration
+    registration_password: str = os.getenv("REGISTRATION_PASSWORD", "12345678")
 
     def model_post_init(self, __context=None) -> None:
         """Construct URLs from individual components after model initialization."""
