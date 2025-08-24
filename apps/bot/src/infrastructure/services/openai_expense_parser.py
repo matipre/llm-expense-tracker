@@ -9,9 +9,8 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 
 from domain.entities.message import ProcessingResult
-from domain.interfaces.expense_categories_repository import IExpenseCategoriesRepository
 from domain.interfaces.expense_parser import IExpenseParser
-from domain.interfaces.expense_tool import IExpenseTool
+from domain.interfaces.tool_factory import IToolFactory
 
 
 class OpenAIExpenseParser(IExpenseParser):
@@ -20,8 +19,7 @@ class OpenAIExpenseParser(IExpenseParser):
     def __init__(
         self, 
         openai_api_key: str, 
-        categories_repository: IExpenseCategoriesRepository,
-        tools: list[IExpenseTool],
+        tool_factory: IToolFactory,
         model: str = "gpt-3.5-turbo"
     ):
         self.llm = ChatOpenAI(
@@ -29,8 +27,7 @@ class OpenAIExpenseParser(IExpenseParser):
             model=model,
             temperature=0.1,
         )
-        self.categories_repository = categories_repository
-        self.tools = tools
+        self.tool_factory = tool_factory
         self.logger = logging.getLogger(__name__)
 
     async def process_message(self, message_text: str, user_id: int) -> ProcessingResult:
@@ -38,11 +35,18 @@ class OpenAIExpenseParser(IExpenseParser):
         try:
             self.logger.info("Processing message for user %s: %s", user_id, message_text)
             
-            # Get available categories for system prompt
-            categories = await self.categories_repository.get_all_categories()
+            # Create tools contextualized for this specific user
+            user_tools = self.tool_factory.create_tools_for_user(user_id)
+            
+            # Get available categories for system prompt (from the first tool that has categories)
+            categories = []
+            for tool in user_tools:
+                if hasattr(tool, 'categories_repository') and hasattr(tool.categories_repository, 'get_all_categories'):
+                    categories = await tool.categories_repository.get_all_categories()
+                    break
             
             # Get LangChain tools from our tool implementations
-            langchain_tools = [tool.get_langchain_tool() for tool in self.tools]
+            langchain_tools = [tool.get_langchain_tool() for tool in user_tools]
             
             # Create the system prompt
             system_prompt = f"""You are a helpful expense tracking assistant. 
