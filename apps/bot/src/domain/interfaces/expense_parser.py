@@ -1,37 +1,35 @@
 """
-Expense parser interface for LLM integration.
+Expense parser interface for LLM integration with tools.
 """
 
 from abc import ABC, abstractmethod
 
-from domain.entities.message import ParsedExpense
+from domain.entities.message import ProcessingResult
 
 
 class IExpenseParser(ABC):
-    """Interface for parsing expenses from text using LLM."""
+    """Interface for processing messages using LLM with tools."""
 
     @abstractmethod
-    async def parse_expense(self, message_text: str) -> ParsedExpense | None:
+    async def process_message(
+        self, 
+        message_text: str, 
+        user_id: int
+    ) -> ProcessingResult:
         """
-        Parse expense information from message text.
-
+        Process a message using LLM with tools.
+        
+        The LLM can decide to:
+        - Add a new expense
+        - Query recent expenses
+        - Query expenses by category
+        - Provide a general chat response
+        
         Args:
             message_text: The raw message text from user
-
+            user_id: The ID of the user sending the message
+            
         Returns:
-            ParsedExpense if the message contains expense information, None otherwise
-        """
-        pass
-
-    @abstractmethod
-    async def is_expense_message(self, message_text: str) -> bool:
-        """
-        Determine if a message contains expense information.
-
-        Args:
-            message_text: The raw message text from user
-
-        Returns:
-            True if the message appears to be about an expense, False otherwise
+            ProcessingResult containing the outcome and response text
         """
         pass

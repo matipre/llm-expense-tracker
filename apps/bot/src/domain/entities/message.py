@@ -2,9 +2,15 @@
 Message domain entities.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from domain.entities.expense import Expense
 
 
 @dataclass
@@ -63,3 +69,27 @@ class BotResponse:
     chat_id: int
     text: str
     reply_to_message_id: int | None = None
+
+
+@dataclass
+class ExpenseSummary:
+    """Represents a summary of expenses."""
+    
+    total_amount: Decimal
+    expenses: list[Expense]
+    by_category: dict[str, Decimal]
+    period_description: str
+
+    def __post_init__(self):
+        """Validate expense summary data."""
+        if not isinstance(self.total_amount, Decimal):
+            self.total_amount = Decimal(str(self.total_amount))
+
+
+@dataclass
+class ProcessingResult:
+    """Represents the result of processing a message."""
+    
+    success: bool
+    response_text: str
+    summary_data: Optional[ExpenseSummary] = None

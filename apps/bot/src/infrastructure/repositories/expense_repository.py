@@ -3,6 +3,7 @@ PostgreSQL expense repository implementation.
 """
 
 import logging
+from datetime import datetime
 from decimal import Decimal
 
 import asyncpg
@@ -118,6 +119,87 @@ class PostgreSQLExpenseRepository(IExpenseRepository):
         except Exception as e:
             self.logger.error(
                 f"Error finding expenses for user {user_id}: {e}", exc_info=True
+            )
+            raise
+
+    async def find_by_user_id_and_date_range(
+        self, 
+        user_id: int, 
+        start_date: datetime, 
+        end_date: datetime,
+        limit: int = 100
+    ) -> list[Expense]:
+        """Find expenses by user ID within a date range."""
+        try:
+            pool = await self._get_pool()
+            async with pool.acquire() as conn:
+                rows = await conn.fetch(
+                    """
+                    SELECT id, user_id, description, amount, category, added_at
+                    FROM expenses
+                    WHERE user_id = $1 AND added_at >= $2 AND added_at <= $3
+                    ORDER BY added_at DESC
+                    LIMIT $4
+                    """,
+                    user_id,
+                    start_date,
+                    end_date,
+                    limit,
+                )
+
+                expenses = []
+                for row in rows:
+                    expenses.append(
+                        Expense(
+                            id=row["id"],
+                            user_id=row["user_id"],
+                            description=row["description"],
+                            amount=Decimal(str(row["amount"])),
+                            category=row["category"],
+                            added_at=row["added_at"],
+                        )
+                    )
+
+                return expenses
+
+        except Exception as e:
+            self.logger.error(
+                f"Error finding expenses for user {user_id} in date range: {e}", exc_info=True
+            )
+            raise
+
+    async def get_summary_by_category(
+        self, 
+        user_id: int, 
+        start_date: datetime, 
+        end_date: datetime
+    ) -> dict[str, Decimal]:
+        """Get expense summary grouped by category within date range."""
+        try:
+            pool = await self._get_pool()
+            async with pool.acquire() as conn:
+                rows = await conn.fetch(
+                    """
+                    SELECT category, SUM(amount) as total_amount
+                    FROM expenses
+                    WHERE user_id = $1 AND added_at >= $2 AND added_at <= $3
+                    GROUP BY category
+                    ORDER BY total_amount DESC
+                    """,
+                    user_id,
+                    start_date,
+                    end_date,
+                )
+
+                summary = {}
+                for row in rows:
+                    summary[row["category"]] = Decimal(str(row["total_amount"]))
+
+                return summary
+
+        except Exception as e:
+            self.logger.error(
+                f"Error getting expense summary for user {user_id}: {e}", exc_info=True
             )
             raise
 

@@ -17,10 +17,6 @@ class Settings(BaseSettings):
     openai_max_tokens: int = int(os.getenv("OPENAI_MAX_TOKENS", "1000"))
     openai_temperature: float = float(os.getenv("OPENAI_TEMPERATURE", "0.7"))
 
-    # Legacy Supabase Configuration (for transition)
-    supabase_url: str = os.getenv("SUPABASE_URL", "")
-    supabase_key: str = os.getenv("SUPABASE_KEY", "")
-
     # Database Configuration
     database_url: str = ""
     db_host: str = os.getenv("DB_HOST", "localhost")
@@ -77,6 +73,7 @@ class Settings(BaseSettings):
         # Look for .env file in project root (3 levels up from this file)
         env_file = str(Path(__file__).parent.parent.parent.parent.parent / ".env")
         env_file_encoding = "utf-8"
+        extra = "ignore"
 
     def validate_required_settings(self) -> None:
         """Validate that all required settings are present."""

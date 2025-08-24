@@ -1,101 +1,66 @@
 """
-Message processor service - main use case for processing incoming messages.
+Message processor service - main use case for processing incoming messages with tools.
 """
 
 import logging
-from datetime import datetime
 
 from application.jobs.response_sending_job import ResponseSendingJob
-from domain.entities.expense import Expense
 from domain.entities.message import IncomingMessage
 from domain.interfaces.expense_parser import IExpenseParser
-from domain.interfaces.expense_repository import IExpenseRepository
 from domain.interfaces.user_repository import IUserRepository
 
 
 class MessageProcessorService:
-    """Service for processing incoming messages."""
+    """Service for processing incoming messages using LLM tools."""
 
     def __init__(
         self,
         user_repository: IUserRepository,
-        expense_repository: IExpenseRepository,
         expense_parser: IExpenseParser,
         response_sending_job: ResponseSendingJob,
     ):
         self.user_repository = user_repository
-        self.expense_repository = expense_repository
         self.expense_parser = expense_parser
         self.response_sending_job = response_sending_job
         self.logger = logging.getLogger(__name__)
 
     async def process_message(self, message: IncomingMessage) -> None:
         """
-        Process an incoming message from the queue.
+        Process an incoming message using LLM with tools.
 
         Args:
             message: The incoming message to process
         """
         self.logger.info(
-            f"Processing message from user {message.telegram_user_id}: {message.message_text}"
+            "Processing message from user %s: %s",
+            message.telegram_user_id,
+            message.message_text
         )
 
-        # # Check if user exists in whitelist
+        # Check if user exists in whitelist
         user = await self.user_repository.find_by_telegram_id(
             str(message.telegram_user_id)
         )
         if not user:
             self.logger.warning(
-                f"User {message.telegram_user_id} not in whitelist, ignoring message"
+                "User %s not in whitelist, ignoring message",
+                message.telegram_user_id
             )
             return
 
-        # Check if message is about an expense
-        is_expense = await self.expense_parser.is_expense_message(message.message_text)
-        if not is_expense:
-            self.logger.info(
-                f"Message from user {message.telegram_user_id} is not about an expense, ignoring"
-            )
-            return
-
-        # Parse the expense information
-        parsed_expense = await self.expense_parser.parse_expense(message.message_text)
-        if not parsed_expense:
-            self.logger.warning(
-                f"Failed to parse expense from message: {message.message_text}"
-            )
-            await self._send_error_response(
-                message, "I couldn't understand your expense. Please try again."
-            )
-            return
-
-        # Create and save the expense
-        expense = Expense(
-            id=None,
-            user_id=user.id,
-            description=parsed_expense.description,
-            amount=parsed_expense.amount,
-            category=parsed_expense.category,
-            added_at=datetime.utcnow(),
+        # Process message using LLM with tools
+        result = await self.expense_parser.process_message(
+            message.message_text, user.id
         )
+        
+        if not result.success:
+            self.logger.error("Failed to process message: %s", result.response_text)
+        
+        # Always send the response from the LLM
+        await self._send_response(message, result.response_text)
 
-        saved_expense = await self.expense_repository.create(expense)
-        self.logger.info(f"Saved expense {saved_expense.id} for user {user.id}")
-
-        # Send success response
-        response_text = (
-            f"{saved_expense.category} expense of {saved_expense.amount} added ✅"
-        )
-        await self._send_success_response(message, response_text)
-
-    async def _send_success_response(self, message: IncomingMessage, text: str) -> None:
-        """Send a success response back to Telegram."""
-        await self.response_sending_job.schedule_response_sending(
-            chat_id=message.chat_id, text=text, reply_to_message_id=message.message_id
-        )
-
-    async def _send_error_response(self, message: IncomingMessage, text: str) -> None:
-        """Send an error response back to Telegram."""
+    async def _send_response(self, message: IncomingMessage, text: str) -> None:
+        """Send a response back to Telegram."""
         await self.response_sending_job.schedule_response_sending(
             chat_id=message.chat_id, text=text, reply_to_message_id=message.message_id
         )

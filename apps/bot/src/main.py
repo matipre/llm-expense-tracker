@@ -19,9 +19,13 @@ from application.services.worker_processor import WorkerProcessorService
 from config.settings import settings
 from infrastructure.providers.rabbitmq_provider import RabbitMQProvider
 from infrastructure.repositories.expense_repository import PostgreSQLExpenseRepository
+from infrastructure.repositories.fixed_expense_categories_repository import FixedExpenseCategoriesRepository
 from infrastructure.repositories.user_repository import PostgreSQLUserRepository
 from infrastructure.services.openai_expense_parser import OpenAIExpenseParser
 from infrastructure.services.rabbitmq_job_factory import RabbitMQJobFactory
+from infrastructure.tools.add_expense_tool import AddExpenseTool
+from infrastructure.tools.get_expenses_by_category_tool import GetExpensesByCategoryTool
+from infrastructure.tools.get_recent_expenses_tool import GetRecentExpensesTool
 from presentation.routers.health import router as health_router
 
 # Configure logging
@@ -47,13 +51,27 @@ async def lifespan(app: FastAPI):
         # Validate settings (skip Supabase validation for now)
         # settings.validate_required_settings()
 
-        # Initialize dependencies
-        openai_expense_parser = OpenAIExpenseParser(
-            openai_api_key=settings.openai_api_key, model=settings.openai_model
-        )
-
+        # Initialize repositories
         user_repository = PostgreSQLUserRepository(settings.database_url)
         expense_repository = PostgreSQLExpenseRepository(settings.database_url)
+        categories_repository = FixedExpenseCategoriesRepository()
+
+        # Initialize tools (using placeholder user_id=0 for now - this needs refactoring)
+        # TODO: Tools should be created per request with actual user_id
+        placeholder_user_id = 1
+        tools = [
+            AddExpenseTool(expense_repository, categories_repository, placeholder_user_id),
+            GetRecentExpensesTool(expense_repository, placeholder_user_id),
+            GetExpensesByCategoryTool(expense_repository, categories_repository, placeholder_user_id),
+        ]
+
+        # Initialize OpenAI expense parser with all dependencies
+        openai_expense_parser = OpenAIExpenseParser(
+            openai_api_key=settings.openai_api_key,
+            categories_repository=categories_repository,
+            tools=tools,
+            model=settings.openai_model
+        )
 
         # Initialize RabbitMQ job factory
         job_factory = RabbitMQJobFactory(batch_size=settings.job_batch_size)
@@ -64,7 +82,6 @@ async def lifespan(app: FastAPI):
         # Initialize message processor service with response sending job
         message_processor_service = MessageProcessorService(
             user_repository=user_repository,
-            expense_repository=expense_repository,
             expense_parser=openai_expense_parser,
             response_sending_job=response_sending_job,
         )

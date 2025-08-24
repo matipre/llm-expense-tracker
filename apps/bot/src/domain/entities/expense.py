@@ -6,20 +6,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 
-# Predefined expense categories
-EXPENSE_CATEGORIES = [
-    "Housing",
-    "Transportation",
-    "Food",
-    "Utilities",
-    "Insurance",
-    "Medical/Healthcare",
-    "Savings",
-    "Debt",
-    "Education",
-    "Entertainment",
-    "Other",
-]
+# Note: Expense categories are now managed via IExpenseCategoriesRepository
+# This maintains backward compatibility for any existing imports
 
 
 @dataclass
@@ -47,15 +35,19 @@ class Expense:
         if not self.category:
             raise ValueError("Category is required")
 
-        if self.category not in EXPENSE_CATEGORIES:
-            raise ValueError(
-                f"Category must be one of: {', '.join(EXPENSE_CATEGORIES)}"
-            )
+        # Note: Category validation is now handled by the service layer
+        # using IExpenseCategoriesRepository
 
         if not self.added_at:
             self.added_at = datetime.utcnow()
 
     @staticmethod
     def get_valid_categories() -> list[str]:
-        """Get list of valid expense categories."""
-        return EXPENSE_CATEGORIES.copy()
+        """
+        Get list of valid expense categories.
+        
+        Note: This method is deprecated. Use IExpenseCategoriesRepository instead.
+        """
+        # Backward compatibility - import here to avoid circular dependencies
+        from infrastructure.repositories.fixed_expense_categories_repository import FIXED_EXPENSE_CATEGORIES
+        return FIXED_EXPENSE_CATEGORIES.copy()
