@@ -161,6 +161,17 @@ Key environment variables (see `env.example` for complete list):
 - `TELEGRAM_POLLING_ENABLED`: Set to `true` for development
 - `DATABASE_URL`: PostgreSQL connection string
 - `RABBITMQ_URL`: RabbitMQ connection string
+- `REGISTRATION_PASSWORD`: Password to register on telegram bot.
 
+## 🧪 Testing
+
+**Note**: Unit tests were not implemented in this project due to time constraints. In a production environment, comprehensive test coverage would include:
+
+- Unit tests for services and repositories
+- Integration tests for API endpoints
+- End-to-end tests for the complete expense processing flow
+- Mock tests for external API integrations (OpenAI, Telegram)
+
+Future improvements should prioritize adding test coverage to ensure reliability and maintainability.
 
 **Happy expense tracking! 💰📊**
