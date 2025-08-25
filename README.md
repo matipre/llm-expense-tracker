@@ -165,7 +165,7 @@ Key environment variables (see `env.example` for complete list):
 
 ## 🧪 Testing
 
-**Note**: Unit tests were not implemented in this project due to time constraints. In a production environment, comprehensive test coverage would include:
+**Note**: Unit tests in python were not implemented in this project due to time constraints. In a production environment, comprehensive test coverage would include:
 
 - Unit tests for services and repositories
 - Integration tests for API endpoints
