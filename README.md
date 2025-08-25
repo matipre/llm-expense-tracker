@@ -2,6 +2,37 @@
 
 An intelligent expense tracking system that allows users to manage their expenses through a Telegram bot powered by LLMs.
 
+## 🎯 Demo
+
+### Try the Live Bot
+
+This bot is hosted using Railway. You can test the functionality by chatting with our Telegram bot:
+
+**Bot**: [@ExpensioTrackerBot](https://t.me/ExpensioTrackerBot)
+
+### Registration
+
+To register as a new user, send the following password as a message:
+
+```
+12345678
+```
+
+### Usage Examples
+
+Once registered, you can start tracking expenses by sending messages like:
+
+- "I spent $25 on coffee at Starbucks"
+- "Paid 15 EUR for lunch today"
+- "Gas station: $45.50"
+- "Movie tickets for 2 people: $30"
+
+The AI-powered system will automatically parse your messages and extract:
+- Amount and currency
+- Category (food, transport, entertainment, etc.)
+- Description and location when available
+
+
 ## 🏗️ Project Structure
 
 This is a monorepo containing two main services that work together to provide expense tracking functionality:
@@ -88,36 +119,6 @@ You'll need to obtain these API keys before running the application:
    This starts both services:
    - **Connector**: http://localhost:3001
    - **Bot**: http://localhost:3002
-
-## 🎯 Demo
-
-### Try the Live Bot
-
-You can test the expense tracking functionality by chatting with our Telegram bot:
-
-**Bot**: [@ExpensioTrackerBot](https://t.me/ExpensioTrackerBot)
-
-### Registration
-
-To register as a new user, send the following password as a message:
-
-```
-12345678
-```
-
-### Usage Examples
-
-Once registered, you can start tracking expenses by sending messages like:
-
-- "I spent $25 on coffee at Starbucks"
-- "Paid 15 EUR for lunch today"
-- "Gas station: $45.50"
-- "Movie tickets for 2 people: $30"
-
-The AI-powered system will automatically parse your messages and extract:
-- Amount and currency
-- Category (food, transport, entertainment, etc.)
-- Description and location when available
 
 ## 🧩 Development
 
