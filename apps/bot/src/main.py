@@ -23,6 +23,7 @@ from infrastructure.repositories.expense_repository import PostgreSQLExpenseRepo
 from infrastructure.repositories.fixed_expense_categories_repository import FixedExpenseCategoriesRepository
 from infrastructure.repositories.user_repository import PostgreSQLUserRepository
 from infrastructure.services.expense_tool_factory import ExpenseToolFactory
+from infrastructure.services.hybrid_message_classifier import HybridMessageClassifier
 from infrastructure.services.openai_expense_parser import OpenAIExpenseParser
 from infrastructure.services.rabbitmq_job_factory import RabbitMQJobFactory
 from presentation.routers.health import router as health_router
@@ -65,6 +66,12 @@ async def lifespan(app: FastAPI):
             model=settings.openai_model
         )
 
+        # Initialize message classifier
+        message_classifier = HybridMessageClassifier(
+            openai_api_key=settings.openai_api_key,
+            model=settings.openai_model
+        )
+
         # Initialize RabbitMQ job factory
         job_factory = RabbitMQJobFactory(batch_size=settings.job_batch_size)
 
@@ -81,6 +88,7 @@ async def lifespan(app: FastAPI):
         message_processor_service = MessageProcessorService(
             user_service=user_service,
             expense_parser=openai_expense_parser,
+            message_classifier=message_classifier,
             response_sending_job=response_sending_job,
         )
 

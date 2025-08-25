@@ -8,6 +8,7 @@ from application.jobs.response_sending_job import ResponseSendingJob
 from application.services.user_service import UserService
 from domain.entities.message import IncomingMessage
 from domain.interfaces.expense_parser import IExpenseParser
+from domain.interfaces.message_classifier import IMessageClassifier
 
 
 class MessageProcessorService:
@@ -17,10 +18,12 @@ class MessageProcessorService:
         self,
         user_service: UserService,
         expense_parser: IExpenseParser,
+        message_classifier: IMessageClassifier,
         response_sending_job: ResponseSendingJob,
     ):
         self.user_service = user_service
         self.expense_parser = expense_parser
+        self.message_classifier = message_classifier
         self.response_sending_job = response_sending_job
         self.logger = logging.getLogger(__name__)
 
@@ -51,7 +54,20 @@ class MessageProcessorService:
             await self._send_response(message, welcome_message)
             return
 
-        # Process message using LLM with tools
+        # Check if message is expense-related before processing
+        is_expense_related = await self.message_classifier.is_expense_related(
+            message.message_text
+        )
+        
+        if not is_expense_related:
+            self.logger.info(
+                "Ignoring non-expense message from user %s: %s",
+                message.telegram_user_id,
+                message.message_text[:50]
+            )
+            return
+
+        # Process expense-related message using LLM with tools
         result = await self.expense_parser.process_message(
             message.message_text, user.id
         )
@@ -59,7 +75,7 @@ class MessageProcessorService:
         if not result.success:
             self.logger.error("Failed to process message: %s", result.response_text)
         
-        # Always send the response from the LLM
+        # Send the response from the LLM
         await self._send_response(message, result.response_text)
 
     async def _send_response(self, message: IncomingMessage, text: str) -> None:
